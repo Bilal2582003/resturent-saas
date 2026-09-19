@@ -2,9 +2,13 @@
   "name": "qr-menu-saas",
   "version": "1.0.0",
   "description": "src/\r ├── config/\r │   ├── db.js\r │   └── env.js\r ├── middleware/\r │   ├── auth.js          (requireAuth, requireRole)\r │   ├── tenant.js        (resolve restaurant from slug)\r │   └── upload.js        (multer config)\r ├── repositories/\r │   ├── restaurant.repo.js\r │   ├── category.repo.js\r │   ├── item.repo.js\r │   └── order.repo.js\r ├── services/\r │   ├── auth.service.js\r │   ├── menu.service.js\r │   ├── order.service.js\r │   └── image.service.js\r ├── controllers/\r │   ├── auth.controller.js\r │   ├── superadmin.controller.js\r │   ├── dashboard.controller.js\r │   └── menu.controller.js\r ├── routes/\r │   ├── auth.routes.js\r │   ├── superadmin.routes.js\r │   ├── dashboard.routes.js\r │   └── menu.routes.js\r └── server.js",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+     "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "migrate": "psql $DATABASE_URL -f migrations/001_init.sql",
+    "seed": "node seeds/seed.js"
   },
   "keywords": [],
   "author": "",

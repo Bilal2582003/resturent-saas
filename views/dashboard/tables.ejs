@@ -1,0 +1,30 @@
+<section class="page-head">
+  <h1>Tables</h1>
+</section>
+
+<section class="card">
+  <form method="post" action="/dashboard/tables" class="inline-form">
+    <input type="text" name="table_number" placeholder="Table #" required>
+    <input type="text" name="label" placeholder="Label (optional)">
+    <button class="btn btn-primary" type="submit">Add Table</button>
+  </form>
+
+  <table class="table">
+    <thead><tr><th>#</th><th>Label</th><th>Active</th><th></th></tr></thead>
+    <tbody>
+      <% tables.forEach(t => { %>
+        <tr>
+          <td><%= t.table_number %></td>
+          <td><%= t.label || '—' %></td>
+          <td><%= t.is_active ? 'Yes' : 'No' %></td>
+          <td>
+            <form method="post" action="/dashboard/tables/<%= t.id %>/delete" style="display:inline"
+                  onsubmit="return confirm('Delete table?')">
+              <button class="btn btn-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>

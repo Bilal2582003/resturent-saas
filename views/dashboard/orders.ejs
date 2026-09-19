@@ -1,0 +1,72 @@
+<section class="page-head">
+  <h1>Orders</h1>
+  <div class="chips">
+    <a class="chip <%= !activeStatus ? 'active' : '' %>" href="/dashboard/orders">All</a>
+    <% ['pending','preparing','ready','completed','cancelled'].forEach(s => { %>
+      <a class="chip <%= activeStatus === s ? 'active' : '' %>" href="/dashboard/orders?status=<%= s %>">
+        <%= s %> (<%= stats[s] || 0 %>)
+      </a>
+    <% }) %>
+  </div>
+</section>
+
+<section class="card">
+  <% if (!orders.length) { %>
+    <p class="muted">No orders.</p>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Total</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>
+        <% orders.forEach(o => { %>
+          <tr>
+            <td><%= o.order_number %></td>
+            <td><%= o.customer_name %><br><small><%= o.customer_phone %></small></td>
+            <td><%= o.order_type %><%= o.table_number ? ` • T${o.table_number}` : '' %></td>
+            <td><%= o.total %></td>
+            <td><span class="pill pill-<%= o.status %>"><%= o.status %></span></td>
+            <td><small><%= new Date(o.created_at).toLocaleString() %></small></td>
+            <td class="row-actions">
+              <button class="btn btn-ghost" onclick="viewOrder(<%= o.id %>)">View</button>
+              <form method="post" action="/dashboard/orders/<%= o.id %>/status" style="display:inline">
+                <select name="status" onchange="this.form.submit()">
+                  <% ['pending','preparing','ready','completed','cancelled'].forEach(s => { %>
+                    <option value="<%= s %>" <%= o.status === s ? 'selected' : '' %>><%= s %></option>
+                  <% }) %>
+                </select>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+
+<div id="order-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('order-modal').classList.add('hidden')">×</button>
+    <div id="order-content">Loading…</div>
+  </div>
+</div>
+
+<script>
+  async function viewOrder(id) {
+    const res = await fetch(`/dashboard/orders/${id}`, { headers: { Accept: 'application/json' } });
+    const o = await res.json();
+    document.getElementById('order-content').innerHTML = `
+      <h2>${o.order_number}</h2>
+      <p><b>${o.customer_name}</b> — ${o.customer_phone}</p>
+      <p>${o.order_type} ${o.table_number ? '(Table ' + o.table_number + ')' : ''}</p>
+      ${o.customer_address ? `<p>${o.customer_address}</p>` : ''}
+      <table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+        <tbody>
+          ${o.items.map(i => `<tr><td>${i.name_snapshot}</td><td>${i.quantity}</td><td>${i.price_snapshot}</td><td>${i.subtotal}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <p><b>Total: ${o.total}</b></p>
+      ${o.notes ? `<p><i>Notes: ${o.notes}</i></p>` : ''}
+    `;
+    document.getElementById('order-modal').classList.remove('hidden');
+  }
+</script>

@@ -1,0 +1,65 @@
+<section class="page-head">
+  <h1>Appearance</h1>
+  <a class="btn" href="/r/<%= restaurant.slug %>" target="_blank">Preview →</a>
+</section>
+
+<section class="card">
+  <form method="post" action="/dashboard/appearance" class="form">
+    <div class="grid-2">
+      <label>Theme
+        <select name="theme">
+          <% ['modern','elegant','classic'].forEach(t => { %>
+            <option value="<%= t %>" <%= settings.theme === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Button Style
+        <select name="button_style">
+          <% ['rounded','square','pill'].forEach(t => { %>
+            <option value="<%= t %>" <%= settings.button_style === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Primary Color <input type="color" name="primary_color" value="<%= settings.primary_color %>"></label>
+      <label>Accent Color <input type="color" name="accent_color" value="<%= settings.accent_color %>"></label>
+      <label>Background Color <input type="color" name="bg_color" value="<%= settings.bg_color %>"></label>
+      <label>Text Color <input type="color" name="text_color" value="<%= settings.text_color %>"></label>
+      <label>Border Radius <input type="number" name="border_radius" value="<%= settings.border_radius %>" min="0" max="40"></label>
+      <label>Font Family
+        <select name="font_family">
+          <% ['Inter','Poppins','Roboto','Playfair Display'].forEach(f => { %>
+            <option value="<%= f %>" <%= settings.font_family === f ? 'selected' : '' %>><%= f %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Currency Symbol <input type="text" name="currency_symbol" value="<%= settings.currency_symbol %>"></label>
+      <label class="check"><input type="checkbox" name="show_cover" <%= settings.show_cover ? 'checked' : '' %>> Show cover image</label>
+      <label class="check"><input type="checkbox" name="show_search" <%= settings.show_search ? 'checked' : '' %>> Show search</label>
+    </div>
+    <button class="btn btn-primary" type="submit">Save Appearance</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Logo & Cover</h2>
+  <form class="inline-form" onsubmit="uploadBrand(event, 'logo')">
+    <input type="file" name="image" accept="image/*" required>
+    <button class="btn" type="submit">Upload Logo</button>
+  </form>
+  <% if (restaurant.logo_url) { %><img src="<%= restaurant.logo_url %>" class="thumb-lg"><% } %>
+
+  <form class="inline-form" onsubmit="uploadBrand(event, 'cover')">
+    <input type="file" name="image" accept="image/*" required>
+    <button class="btn" type="submit">Upload Cover</button>
+  </form>
+  <% if (restaurant.cover_url) { %><img src="<%= restaurant.cover_url %>" class="cover-preview"><% } %>
+</section>
+
+<script>
+  async function uploadBrand(e, kind) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const res = await fetch(`/dashboard/appearance/upload/${kind}`, { method: 'POST', body: fd });
+    if (res.ok) location.reload(); else alert('Upload failed');
+  }
+</script>

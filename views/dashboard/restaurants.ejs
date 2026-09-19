@@ -1,0 +1,47 @@
+<section class="page-head">
+  <h1>Restaurants</h1>
+  <form method="get" class="inline-form">
+    <input type="text" name="search" value="<%= search %>" placeholder="Search name or slug">
+    <button class="btn" type="submit">Search</button>
+  </form>
+  <a class="btn btn-primary" href="/admin/restaurants/new">+ New</a>
+</section>
+
+<section class="card">
+  <table class="table">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Slug</th><th>Status</th><th>Theme</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      <% restaurants.forEach(r => { %>
+        <tr>
+          <td><%= r.id %></td>
+          <td><%= r.name %></td>
+          <td><code><%= r.slug %></code></td>
+          <td><span class="pill pill-<%= r.status %>"><%= r.status %></span></td>
+          <td><%= r.theme || 'modern' %></td>
+          <td class="row-actions">
+            <a href="/admin/restaurants/<%= r.id %>/edit">Edit</a>
+            <a href="/r/<%= r.slug %>" target="_blank">View</a>
+            <form method="post" action="/admin/restaurants/<%= r.id %>/toggle" style="display:inline">
+              <button class="btn btn-ghost" type="submit"><%= r.status === 'active' ? 'Suspend' : 'Activate' %></button>
+            </form>
+            <form method="post" action="/admin/restaurants/<%= r.id %>/delete" style="display:inline"
+                  onsubmit="return confirm('Delete this restaurant and all its data?')">
+              <button class="btn btn-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <% const totalPages = Math.ceil(total / limit); %>
+  <% if (totalPages > 1) { %>
+    <nav class="pagination">
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <a href="?page=<%= i %>&search=<%= search %>" class="<%= i === page ? 'active' : '' %>"><%= i %></a>
+      <% } %>
+    </nav>
+  <% } %>
+</section>

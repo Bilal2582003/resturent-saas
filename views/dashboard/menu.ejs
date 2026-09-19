@@ -1,0 +1,141 @@
+<section class="page-head">
+  <h1>Menu Builder</h1>
+  <a class="btn" href="/dashboard">← Dashboard</a>
+</section>
+
+<!-- CATEGORIES -->
+<section class="card">
+  <h2>Categories</h2>
+  <form method="post" action="/dashboard/categories" class="inline-form">
+    <input type="text" name="name" placeholder="Category name" required>
+    <select name="parent_id">
+      <option value="">— Top-level —</option>
+      <% categories.forEach(c => { %>
+        <option value="<%= c.id %>"><%= c.name %></option>
+      <% }) %>
+    </select>
+    <input type="number" name="sort_order" placeholder="Sort" value="0" style="width:80px">
+    <button class="btn btn-primary" type="submit">Add Category</button>
+  </form>
+
+  <table class="table">
+    <thead><tr><th>ID</th><th>Name</th><th>Parent</th><th>Order</th><th>Active</th><th></th></tr></thead>
+    <tbody>
+      <% categories.forEach(c => { %>
+        <tr>
+          <td><%= c.id %></td>
+          <td>
+            <form method="post" action="/dashboard/categories/<%= c.id %>" class="inline-form">
+              <input type="text" name="name" value="<%= c.name %>">
+          </td>
+          <td>
+              <select name="parent_id">
+                <option value="">—</option>
+                <% categories.filter(x => x.id !== c.id).forEach(p => { %>
+                  <option value="<%= p.id %>" <%= c.parent_id === p.id ? 'selected' : '' %>><%= p.name %></option>
+                <% }) %>
+              </select>
+          </td>
+          <td><input type="number" name="sort_order" value="<%= c.sort_order %>" style="width:70px"></td>
+          <td><input type="checkbox" name="is_active" <%= c.is_active ? 'checked' : '' %>></td>
+          <td class="row-actions">
+              <button class="btn btn-ghost" type="submit">Save</button>
+            </form>
+            <form method="post" action="/dashboard/categories/<%= c.id %>/delete" style="display:inline"
+                  onsubmit="return confirm('Delete category and all its items?')">
+              <button class="btn btn-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+
+<!-- ITEMS -->
+<section class="card">
+  <h2>Items</h2>
+  <form method="post" action="/dashboard/items" enctype="multipart/form-data" class="form">
+    <div class="grid-3">
+      <label>Category
+        <select name="category_id" required>
+          <option value="">Select…</option>
+          <% categories.forEach(c => { %>
+            <option value="<%= c.id %>"><%= c.name %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Name <input type="text" name="name" required></label>
+      <label>Price <input type="number" step="0.01" name="price" required></label>
+      <label>Discount Price <input type="number" step="0.01" name="discount_price"></label>
+      <label>Badge
+        <select name="badge">
+          <option value="">—</option>
+          <option value="spicy">Spicy</option>
+          <option value="veg">Veg</option>
+          <option value="best_seller">Best Seller</option>
+          <option value="new">New</option>
+        </select>
+      </label>
+      <label>Sort <input type="number" name="sort_order" value="0"></label>
+    </div>
+    <label>Description <textarea name="description" rows="2"></textarea></label>
+    <label>Image <input type="file" name="image" accept="image/*"></label>
+    <div class="grid-2">
+      <label class="check"><input type="checkbox" name="is_available" checked> Available</label>
+      <label class="check"><input type="checkbox" name="is_featured"> Featured</label>
+    </div>
+    <button class="btn btn-primary" type="submit">Add Item</button>
+  </form>
+
+  <table class="table">
+    <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Available</th><th>Featured</th><th>Options</th><th></th></tr></thead>
+    <tbody>
+      <% items.forEach(i => { %>
+        <tr>
+          <td><% if (i.image_thumb) { %><img src="<%= i.image_thumb %>" class="thumb"><% } %></td>
+          <td>
+            <form method="post" action="/dashboard/items/<%= i.id %>" enctype="multipart/form-data" class="inline-form">
+              <input type="text" name="name" value="<%= i.name %>">
+          </td>
+          <td>
+              <select name="category_id">
+                <% categories.forEach(c => { %>
+                  <option value="<%= c.id %>" <%= i.category_id === c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+              </select>
+          </td>
+          <td>
+              <input type="number" step="0.01" name="price" value="<%= i.price %>" style="width:90px">
+          </td>
+          <td><input type="checkbox" name="is_available" <%= i.is_available ? 'checked' : '' %>></td>
+          <td><input type="checkbox" name="is_featured" <%= i.is_featured ? 'checked' : '' %>></td>
+          <td>
+            <button type="button" class="btn btn-ghost" data-options-for="<%= i.id %>">Manage</button>
+          </td>
+          <td class="row-actions">
+              <button class="btn btn-ghost" type="submit">Save</button>
+            </form>
+            <form method="post" action="/dashboard/items/<%= i.id %>/delete" style="display:inline"
+                  onsubmit="return confirm('Delete item?')">
+              <button class="btn btn-danger" type="submit">×</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+
+<!-- OPTIONS DRAWER (hidden until opened) -->
+<div id="options-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOptions()">×</button>
+    <div id="options-content"></div>
+  </div>
+</div>
+
+<script>
+  window.__categories = <%- JSON.stringify(categories) %>;
+</script>
+<script src="/js/options.js" defer></script>

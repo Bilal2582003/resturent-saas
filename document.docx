@@ -1,0 +1,236 @@
+Restaurant QR Menu SaaS — Architecture Summary & Implementation Plan
+This is a well-thought-out specification for a multi-tenant restaurant QR menu + ordering SaaS. Here's a consolidated breakdown with practical implementation guidance.
+
+Core Concept
+A multi-restaurant SaaS where each restaurant gets:
+
+A unique QR code → public server-rendered menu
+
+Their own admin panel for menu/order management
+
+Theme customization without code changes
+
+Cash-on-Delivery ordering
+
+You (the SaaS owner) get a super admin panel to manage all tenants.
+
+Key Architectural Decisions
+Decision	Choice	Why
+Rendering	Server-rendered EJS (not React/Next)	Speed for public menu, simpler stack
+Multi-tenancy	Shared DB, restaurant_id on every table	Simplest to maintain, scales fine
+URL strategy	yourmenu.com/r/:slug → later custom domains	MVP simplicity → premium upsell
+Caching	Redis for menu/settings	Invalidate on admin change
+Images	Sharp → WebP/AVIF, 3 sizes	Mobile performance
+Auth	JWT + HTTP-only cookies	Standard, secure
+DB	PostgreSQL + proper indexes	Handles thousands of restaurants/items
+Critical Rules (Don't Skip)
+1. Tenant Isolation Is Non-Negotiable
+Every query for restaurant-owned data must filter by restaurant_id. Never trust an ID from the URL alone.
+
+js
+// WRONG
+const item = await db.query('SELECT * FROM menu_items WHERE id = $1', [id]);
+
+// RIGHT
+const item = await db.query(
+  'SELECT * FROM menu_items WHERE id = $1 AND restaurant_id = $2',
+  [id, req.tenant.restaurantId]
+);
+2. Never Hardcode Colors/Theme
+Store theme config in DB → emit CSS variables:
+
+html
+<style>
+  :root {
+    --primary: {{ theme.primary_color }};
+    --radius: {{ theme.border_radius }}px;
+    --font: {{ theme.font_family }};
+  }
+</style>
+3. Image Pipeline
+text
+Upload → Multer → Sharp → {thumb 300, medium 600, large 1000} in WebP
+Serve thumb/medium in listings, large in detail modal. Always loading="lazy" below fold.
+
+4. Cache Menu Aggressively
+text
+Customer → Nginx → Node → Redis → Postgres (only on miss)
+Invalidate key restaurant:{id}:menu when admin edits categories/items/settings.
+
+Database Schema (Starter)
+text
+users                  (super admins, restaurant admins)
+restaurants            (id, name, slug, theme_id, status, ...)
+restaurant_settings    (colors, button_style, font, radius)
+themes                 (modern | elegant | classic)
+categories             (id, restaurant_id, parent_id, sort_order)
+menu_items             (id, restaurant_id, category_id, price, ...)
+item_options           (add-ons: cheese, egg, etc.)
+item_option_values     (price per option)
+item_images            (multiple per item, sizes)
+customers              (guest-created on first order)
+customer_addresses
+orders                 (id, restaurant_id, table_id, type, status)
+order_items
+order_item_options
+restaurant_tables      (for QR-per-table)
+qr_codes
+coupons
+Essential indexes:
+
+sql
+CREATE INDEX idx_menu_items_restaurant_category
+  ON menu_items(restaurant_id, category_id);
+
+CREATE INDEX idx_orders_restaurant_created
+  ON orders(restaurant_id, created_at DESC);
+
+CREATE UNIQUE INDEX idx_restaurants_slug ON restaurants(slug);
+Project Structure (Node + Express + EJS)
+text
+src/
+├── config/        (database.js, redis.js)
+├── controllers/   (admin/, restaurant/, customer/, auth/)
+├── routes/
+├── services/      (menu, order, restaurant, image, cache)
+├── repositories/  (SQL lives here, not in routes)
+├── middleware/    (auth, tenant, validation)
+├── validators/
+└── utils/
+
+views/
+├── admin/
+├── restaurant/
+├── customer/
+└── themes/{modern,elegant,classic}/
+
+public/  (css, js, images, fonts)
+uploads/
+migrations/
+seeds/
+server.js
+Layering: Route → Controller → Service → Repository → Postgres/Redis
+
+Never write 300-line SQL blobs in a route handler.
+
+Three Panels to Build
+1. Super Admin (/admin)
+Restaurant CRUD (create, activate, suspend)
+
+Assign theme + button style
+
+Reset restaurant admin passwords
+
+View global stats: restaurants, items, orders, revenue
+
+Generate / download QR codes
+
+Subscription management (later)
+
+2. Restaurant Admin (/dashboard)
+Today's stats: pending / preparing / completed / cancelled
+
+Menu builder: Categories → Subcategories → Items (parent_id based)
+
+Item editor: name, price, discount, image, add-ons, badges (spicy, veg, best-seller)
+
+Order queue with status transitions
+
+Appearance: pick theme + colors + button shape
+
+3. Customer Menu (/r/:slug)
+Landing: logo, cover, search, horizontal category chips
+
+Product grid → tap → bottom-sheet modal with add-ons + quantity
+
+Cart via fetch (no page reload), animated count badge
+
+Checkout: guest name/phone/address, dine-in/takeaway/delivery
+
+COD only for MVP
+
+Table auto-detected from ?table=04 if QR-per-table
+
+QR Flow
+text
+/r/bbq-tonight              → general menu
+/r/bbq-tonight?table=04     → dine-in, table pre-filled
+bbq-tonight.yourmenu.com    → custom domain (post-MVP)
+Security Checklist
+□ Argon2/bcrypt password hashing
+□ HTTP-only + Secure + SameSite cookies
+□ CSRF tokens on state-changing forms
+□ Rate limiting (especially on login, order creation)
+□ Helmet.js
+□ Parameterized SQL everywhere
+□ Multer file-size + MIME validation
+□ Role-based middleware (super_admin, restaurant_admin, customer)
+□ Tenant middleware resolves req.tenant from slug/domain
+□ Order ownership check on every order fetch
+Performance Targets
+Metric	Target
+Menu TTFB (cached)	< 100ms
+Menu TTFB (uncached)	< 400ms
+First Contentful Paint	< 1.2s on 4G
+Image payload per card	< 40KB (WebP thumb)
+JS bundle for menu	< 30KB (vanilla or Alpine.js)
+Avoid: React, video backgrounds, 3D, heavy animation libs on the public menu.
+
+Animations (Keep It Subtle)
+Product card: fade + 8px translate-up on scroll-in
+
+Add-to-bag button: 100ms scale pulse
+
+Cart badge: slide + count tween
+
+Product modal: scale 0.96→1 + fade, 200ms
+
+Category chips: smooth horizontal scroll snap
+
+SaaS Pricing Tiers (Suggested)
+Tier	Features
+Free	QR menu, 1 basic theme, 50 items, no orders
+Basic	Unlimited items, 3 themes, orders, analytics
+Pro	Custom domain, coupons, multi-branch, multi-staff, featured items, advanced analytics
+Roadmap Suggestion
+Phase 1 (MVP)
+
+DB schema + migrations
+
+Super admin: create restaurant, assign slug + theme
+
+Restaurant admin: category + item CRUD with image upload
+
+Customer menu: SSR list + item modal + cart + COD checkout
+
+QR generation
+
+Order appears in restaurant admin
+
+Phase 2
+
+Redis caching, image variants (thumb/medium/large WebP)
+
+Table-specific QRs
+
+Coupons, featured items, add-ons
+
+Customer accounts + order history
+
+Phase 3
+
+Custom domains
+
+Multi-branch per restaurant
+
+Analytics dashboard
+
+Subscription billing
+
+Payment gateways (JazzCash, Easypaisa, Stripe)
+
+
+
+
+
+====================== Start with phase 1 =========================

@@ -39,3 +39,26 @@ views/
 public/{css,js,uploads}
 migrations/
 seeds/
+
+======= For run project  =======
+# 1) Create DB
+createdb qr_menu
+
+# 2) Migrate
+psql $DATABASE_URL -f migrations/001_init.sql
+# or on Windows:
+# psql -U postgres -d qr_menu -f migrations/001_init.sql
+
+# 3) Seed
+node seeds/seed.js
+
+# 4) Run dev
+npm run dev
+
+===== Credentials =====
+
+Super admin: super@qr.com / admin123
+Restaurant admin: admin@bbq.com / admin123
+
+
+

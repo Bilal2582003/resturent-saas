@@ -1,0 +1,28 @@
+<section class="page-head">
+  <h1>Super Admin</h1>
+  <a class="btn btn-primary" href="/admin/restaurants/new">+ New Restaurant</a>
+</section>
+
+<section class="stat-grid">
+  <div class="stat"><span class="stat-label">Restaurants</span><span class="stat-value"><%= stats.restaurants %></span></div>
+  <div class="stat"><span class="stat-label">Menu Items</span><span class="stat-value"><%= stats.items %></span></div>
+  <div class="stat"><span class="stat-label">Orders</span><span class="stat-value"><%= stats.orders %></span></div>
+  <div class="stat"><span class="stat-label">Revenue</span><span class="stat-value"><%= stats.revenue %></span></div>
+</section>
+
+<section class="card">
+  <h2>Recent Restaurants</h2>
+  <table class="table">
+    <thead><tr><th>Name</th><th>Slug</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% recentRestaurants.forEach(r => { %>
+        <tr>
+          <td><%= r.name %></td>
+          <td><code><%= r.slug %></code></td>
+          <td><span class="pill pill-<%= r.status %>"><%= r.status %></span></td>
+          <td><a href="/admin/restaurants/<%= r.id %>/edit">Edit</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>

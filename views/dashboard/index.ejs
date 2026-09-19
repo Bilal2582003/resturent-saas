@@ -1,0 +1,35 @@
+<section class="page-head">
+  <h1><%= restaurant.name %></h1>
+  <a class="btn" href="/r/<%= restaurant.slug %>" target="_blank">View Public Menu</a>
+</section>
+
+<section class="stat-grid">
+  <div class="stat"><span class="stat-label">Pending</span><span class="stat-value"><%= stats.pending %></span></div>
+  <div class="stat"><span class="stat-label">Preparing</span><span class="stat-value"><%= stats.preparing %></span></div>
+  <div class="stat"><span class="stat-label">Ready</span><span class="stat-value"><%= stats.ready %></span></div>
+  <div class="stat"><span class="stat-label">Completed</span><span class="stat-value"><%= stats.completed %></span></div>
+  <div class="stat"><span class="stat-label">Cancelled</span><span class="stat-value"><%= stats.cancelled %></span></div>
+</section>
+
+<section class="card">
+  <h2>Recent Orders</h2>
+  <% if (!recentOrders.length) { %>
+    <p class="muted">No orders yet.</p>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Total</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% recentOrders.forEach(o => { %>
+          <tr>
+            <td><%= o.order_number %></td>
+            <td><%= o.customer_name %><br><small><%= o.customer_phone %></small></td>
+            <td><%= o.order_type %></td>
+            <td><%= o.total %></td>
+            <td><span class="pill pill-<%= o.status %>"><%= o.status %></span></td>
+            <td><a href="/dashboard/orders?status=<%= o.status %>">View</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>

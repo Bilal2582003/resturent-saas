@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= restaurant.name %></title>
+  <link rel="stylesheet" href="/css/menu.css">
+  <link href="https://fonts.googleapis.com/css2?family=<%= encodeURIComponent(settings.font_family) %>:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: <%= settings.primary_color %>;
+      --accent: <%= settings.accent_color %>;
+      --bg: <%= settings.bg_color %>;
+      --text: <%= settings.text_color %>;
+      --radius: <%= settings.border_radius %>px;
+      --font: '<%= settings.font_family %>', sans-serif;
+    }
+  </style>
+</head>
+<body class="menu-body theme-<%= settings.theme %>">
+  <header class="menu-header">
+    <% if (settings.show_cover && restaurant.cover_url) { %>
+      <div class="cover" style="background-image:url('<%= restaurant.cover_url %>')"></div>
+    <% } %>
+    <div class="brand-row">
+      <% if (restaurant.logo_url) { %>
+        <img class="logo" src="<%= restaurant.logo_url %>" alt="">
+      <% } %>
+      <div>
+        <h1><%= restaurant.name %></h1>
+        <% if (restaurant.address) { %><p class="muted small"><%= restaurant.address %></p><% } %>
+      </div>
+    </div>
+  </header>
+
+  <% if (settings.show_search) { %>
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Search menu…" autocomplete="off">
+    </div>
+  <% } %>
+
+  <nav class="chips" id="category-chips">
+    <% categories.forEach(c => { %>
+      <a class="chip" href="#cat-<%= c.id %>"><%= c.name %></a>
+    <% }) %>
+  </nav>
+
+  <main class="menu-main">
+    <% categories.forEach(c => { %>
+      <section class="cat-section" id="cat-<%= c.id %>">
+        <h2 class="cat-title"><%= c.name %></h2>
+        <div class="grid">
+          <% c.items.forEach(item => { %>
+            <article class="card-item"
+                     data-id="<%= item.id %>"
+                     data-name="<%= item.name %>"
+                     data-price="<%= item.discount_price || item.price %>"
+                     data-image="<%= item.image_medium || '' %>">
+              <% if (item.image_thumb) { %>
+                <img loading="lazy" class="item-img" src="<%= item.image_thumb %>" alt="">
+              <% } %>
+              <div class="item-info">
+                <div class="item-name">
+                  <%= item.name %>
+                  <% if (item.badge) { %><span class="badge badge-<%= item.badge %>"><%= item.badge.replace('_',' ') %></span><% } %>
+                </div>
+                <div class="item-price">
+                  <% if (item.discount_price) { %>
+                    <s><%= settings.currency_symbol %> <%= item.price %></s>
+                    <b><%= settings.currency_symbol %> <%= item.discount_price %></b>
+                  <% } else { %>
+                    <b><%= settings.currency_symbol %> <%= item.price %></b>
+                  <% } %>
+                </div>
+              </div>
+              <button class="add-btn" data-add="<%= item.id %>">+</button>
+            </article>
+          <% }) %>
+        </div>
+      </section>
+    <% }) %>
+  </main>
+
+  <!-- Floating cart button -->
+  <button id="cart-toggle" class="cart-fab" aria-label="Cart">
+    🛒 <span class="cart-count" id="cart-count">0</span>
+  </button>
+
+  <!-- Cart drawer -->
+  <aside id="cart-drawer" class="cart-drawer hidden">
+    <header class="cart-head">
+      <h3>Your Order</h3>
+      <button onclick="closeCart()" class="modal-close">×</button>
+    </header>
+    <div id="cart-items" class="cart-items"></div>
+    <div class="cart-total">
+      <span>Total</span>
+      <b><%= settings.currency_symbol %> <span id="cart-total">0</span></b>
+    </div>
+    <form id="checkout-form" class="checkout-form">
+      <label>Name <input type="text" name="customer_name" required></label>
+      <label>Phone <input type="tel" name="customer_phone" required></label>
+      <label>Order Type
+        <select name="order_type" id="order-type">
+          <option value="dine_in" <%= tableNumber ? 'selected' : '' %>>Dine-in</option>
+          <option value="takeaway">Takeaway</option>
+          <option value="delivery">Delivery</option>
+        </select>
+      </label>
+      <label id="address-wrap" class="hidden">Address <input type="text" name="customer_address"></label>
+      <label id="table-wrap" class="<%= tableNumber ? '' : 'hidden' %>">
+        Table <input type="text" name="table_number" value="<%= tableNumber || '' %>" readonly>
+      </label>
+      <label>Notes <textarea name="notes" rows="2"></textarea></label>
+      <button class="btn-primary" type="submit">Place Order</button>
+    </form>
+  </aside>
+
+  <!-- Item modal -->
+  <div id="item-modal" class="modal-backdrop hidden">
+    <div class="modal-item">
+      <button class="modal-close" onclick="closeItemModal()">×</button>
+      <div id="item-modal-body">Loading…</div>
+    </div>
+  </div>
+
+  <script>
+    window.__RESTAURANT__ = {
+      slug: '<%= restaurant.slug %>',
+      currency: '<%= settings.currency_symbol %>',
+      tableNumber: '<%= tableNumber || "" %>',
+    };
+  </script>
+  <script src="/js/menu.js" defer></script>
+</body>
+</html>
